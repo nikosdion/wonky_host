@@ -1,0 +1,8 @@
+# Dockerfile for the Nginx container
+FROM nginx:latest
+LABEL maintainer="Nicholas K. Dionysopoulos"
+
+# Replace the default configuration with a custom reverse proxy setup
+COPY nginx.conf /etc/nginx/conf.d/repro.conf
+
+EXPOSE 8942

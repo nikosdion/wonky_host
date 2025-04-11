@@ -1,0 +1,40 @@
+version: '3.9'
+
+services:
+  php-container:
+    image: php:8.3-apache
+    networks:
+      - app-network
+    volumes:
+      - ./web-root:/var/www/html
+
+  mysql-container:
+    image: mysql:8.0
+    command:
+      - mysqld
+    restart: always
+    volumes:
+      - ./mysql:/var/lib/mysql
+    networks:
+      - app-network
+    environment:
+      TZ: "Asia/Nicosia"
+      MYSQL_ROOT_PASSWORD: "uXmquBhjBvnpnWAftm"
+      MYSQL_DATABASE: "repro"
+      MYSQL_USER: "repro_user"
+      MYSQL_PASSWORD: "t9YS8vYxhxptmHFd2a"
+
+  nginx-container:
+    build:
+      context: .
+      dockerfile: Dockerfile-nginx
+    ports:
+      - "8942:8942"
+    networks:
+      - app-network
+    volumes:
+      - ./certificates:/etc/nginx/ssl # Maps the certificates to the container
+
+networks:
+  app-network:
+    driver: bridge
