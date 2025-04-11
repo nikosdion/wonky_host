@@ -1,8 +1,8 @@
-version: '3.9'
-
 services:
   php-container:
-    image: php:8.3-apache
+    build:
+      context: .
+      dockerfile: Dockerfile-php
     networks:
       - app-network
     volumes:

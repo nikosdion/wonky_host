@@ -1,0 +1,6 @@
+FROM php:8.3-apache
+
+RUN apk update; \
+    apk upgrade; \
+    curl -s -O https://curl.haxx.se/ca/cacert.pem && mv cacert.pem /usr/local/share/ca-certificates && update-ca-certificates; \
+    docker-php-ext-install -j10 mysqli;
