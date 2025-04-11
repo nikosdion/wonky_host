@@ -30,6 +30,6 @@
 !/certificates/.gitkeep
 /mysql/*
 !/mysql/.gitkeep
-/webroot/*
-!/webroot/.gitkeep
-!/webroot/index.php
+/web-root/**
+!/web-root/.gitkeep
+!/web-root/index.php
