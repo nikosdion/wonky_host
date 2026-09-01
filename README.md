@@ -13,10 +13,11 @@ This makes for a good simulation of a standard site sitting behind a CDN, TLS te
 
 Requires Docker with Docker Composer. The default installation of Docker Desktop covers these requirements. **It has not been tested with Podman** but I see no reason it shouldn't work.
 
-- Create a new self-signed TLS certificate pair in `certificates` for the hostname `repro.akeeba.dev`. The public key must be named `cert.pem` and the private key `privkey.pem`.
+- Copy `.env.example` to `.env` and edit `DOMAIN_NAME` if you want the proxy to respond to a hostname other than the default `wonky.local.web`. Do NOT use localhost!
+- Create a new self-signed TLS certificate pair in `certificates` for the hostname you chose above. The public key must be named `cert.pem` and the private key `privkey.pem`.
 - Put your site in a **subdirectory** of `web-root`, e.g. `web-root/joomla`.
 - Run `docker compose up --build` to bring up the orchestrated containers.
-- Access your site as `https://repro.akeeba.dev/joomla` where `joomla` is the name of the directory you put your site into.
+- Access your site as `https://<DOMAIN_NAME>/joomla` where `joomla` is the name of the directory you put your site into.
 
 For the database use the following connection information:
 - Hostname: `mysql-container`
@@ -30,25 +31,27 @@ The database files are stored in the `mysql` directory under the repository's ro
 
 ## Implementation notes
 
-The akeeba.dev domain resolves to 127.0.0.1. If you don't trust a person on the Internet you don't know and his DNS (and, to be fair, _you shouldn't!_) use a [`hosts` file](https://en.wikipedia.org/wiki/Hosts_(file)) on your computer to make sure the subdomain resolves to 127.0.0.1. You can of course configure the `conf/nginx.conf` file with a domain name of your choice _as long as it's not `localhost`_ since you're running this in Docker and things _will_ get weird if you use `localhost`.
+Use a [`hosts` file](https://en.wikipedia.org/wiki/Hosts_(file)) on your computer to make sure the subdomain you configure resolves to 127.0.0.1. The hostname the proxy responds to is controlled by the `DOMAIN_NAME` variable in `.env` (see `.env.example`); its default is `repro.local.web`. Pick a hostname _that is not `localhost`_ since you're running this in Docker and things _will_ get weird if you use `localhost`.
+
+The NginX configuration is shipped as `nginx.conf.template`, which the upstream nginx image renders into `/etc/nginx/conf.d/repro.conf` via `envsubst` at container start.
 
 The NginX instance is configured to pass the `X-Forwarded-Host`, `X-Real-IP`, `X-Forwarded-For`, and `X-Forwarded-Proto` headers. This is very similar to what CDNs would be doing in this case.
 
 ## Why does this even exist?
 
-I have been working on workarounds for these issues in Akeeba software. I needed a reproduction environment for the common mistakes people make.
+I have been working on workarounds for these issues in software I manage – personal and professional projects alike. I needed a reproduction environment for the common mistakes people make.
 
 ## How would one configure their server correctly?
 
-If you're using a CDN and commercial hosting it all comes down to your server and CDN configuration, and a single Joomla configuration option (as of this writing, contemporary to Joomla! 5.3). If you are using a different setup, read the information below on Hostname, IP Address, and Scheme.
+If you're using a CDN and commercial hosting, it all comes down to your server and CDN configuration, and a single Joomla configuration option (as of this writing, contemporary to Joomla! 5.3). If you are using a different setup, read the information below on Hostname, IP Address, and Scheme.
 
-All CDNs set the `Host` header, therefore there's no provision for this.
+All CDNs set the `Host` header. Therefore, there's no provision for this.
 
 When it comes to the IP address, Joomla has a Global Configuration option called “Behind Load Balancer”. You must enable it.
 
-> ⚠️ **WARNING!** If someone accesses your origin web server directly (i.e. they know its IP address) they can effectively spoof their IP address by sending an `X-Forwarded-For` header. You should ask your CDN provider for the IP blocks they are going to use to access your web server, and limit access to your web server to only these IP blocks. This can even be done in `.htaccess` on cheap commercial hosts. 
+> ⚠️ **WARNING!** If someone accesses your origin web server directly (i.e. they know its IP address), they can effectively spoof their IP address by sending an `X-Forwarded-For` header. You should ask your CDN provider for the IP blocks they are going to use to access your web server, and limit access to your web server to only these IP blocks. This can even be done in `.htaccess` on cheap commercial hosts. 
 
-When it comes to the scheme (HTTP vs HTTPS) you **MUST** have your CDN only ever access your web server over HTTPS. Most CDNs allow you to create TLS certificates for your origin server; you should do that. Moreover, most CDNs allow you to handle the HTTP to HTTPS redirection at the CDN level; you should do that too. This means that your web server will only ever see HTTPS traffic which makes it simple when it comes to `.htaccess` files, or NginX configuration: you don't need to make any changes compared to accessing your web server directly.
+When it comes to the scheme (HTTP vs HTTPS) you **MUST** have your CDN only ever access your web server over HTTPS. Most CDNs allow you to create TLS certificates for your origin server; you should do that. Moreover, most CDNs allow you to handle the HTTP to HTTPS redirection at the CDN level; you should do that too. This means that your web server will only ever see HTTPS traffic, which makes it simple when it comes to `.htaccess` files, or NginX configuration: you don't need to make any changes compared to accessing your web server directly.
 
 ### Hostname
 
@@ -76,7 +79,7 @@ The `set_real_ip_from` lines are optional, but they contribute to security by on
 
 Ideally, you should have your proxy / TLS terminator / CDN / load balancer only be accessible over HTTPS, and access your site only over HTTPS. If that's not possible, you have very limited options. The server will be setting its environment variables based on the protocol it's being accessed on, not based on the URL the proxy sees. This requires a few workarounds when taking action conditional on HTTP vs HTTPS access.
 
-> ⚠️ Using the X-Forwarded-Proto to decide whether the request is HTTPS is _generally unsafe_ if the web server can be accessed directly over the Internet. The server configuration below should only be used in two cases: a. If the web server can only be accessed through the proxy due to the network topology / OS-level firewall; or b. There is additional server configuration to prevent access to the server from anything that is NOT going through a proxy. In any other case it's possible for an attacker to launch a MITM attack which sends the `X-Forwarded-Proto: https` HTTP header to the origin server even though the request is over plain HTTP, thereby gaining access to unencrypted traffic (a form of HTTP downgrade attack). For this reason, it is **CRUCIAL** for security that the proxy only ever accesses the origin over HTTPS, and there's provision **on the proxy side** to redirect HTTP traffic to HTTPS.
+> ⚠️ Using the X-Forwarded-Proto to decide whether the request is HTTPS is _generally unsafe_ if the web server can be accessed directly over the Internet. The server configuration below should only be used in two cases: a. If the web server can only be accessed through the proxy due to the network topology / OS-level firewall; or b. There is additional server configuration in place to prevent access to the server from anything that is NOT going through a proxy. In any other case it's possible for an attacker to launch a MITM attack which sends the `X-Forwarded-Proto: https` HTTP header to the origin server even though the request is over plain HTTP, thereby gaining access to unencrypted traffic (a form of HTTP downgrade attack). For this reason, it is **CRUCIAL** for security that the proxy only ever accesses the origin over HTTPS, and there's a provision **on the proxy side** to redirect HTTP traffic to HTTPS.
 
 If you have Apache. You can look at both the `HTTPS` environment variable and the `X-Forwarded-Proto` header when doing things like redirecting to HTTPS:
 ```apacheconf
@@ -90,19 +93,19 @@ If you have Apache. You can look at both the `HTTPS` environment variable and th
 
 If you have NginX. You can look at both the built-in `$scheme` variable and the `X-Forwarded-Proto` header when doing things like redirecting to HTTPS: 
 ```nginx configuration
-    set $akHTTPSFlag 0;
+    set $nkdHTTPSFlag 0;
 
     # Check if the X-Forwarded-Proto header something other than "https"
     if ($http_x_forwarded_proto = "https") {
-        set $akHTTPSFlag 1;
+        set $nkdHTTPSFlag 1;
     }
 
     # Alternatively, check the URL scheme reported by NginX.
     if ($scheme = "https") {
-        set $akHTTPSFlag 1;
+        set $nkdHTTPSFlag 1;
     }
     
-    if ($akHTTPSFlag != 1) {
+    if ($nkdHTTPSFlag != 1) {
         return 301 https://$host$request_uri;
     }
 ```

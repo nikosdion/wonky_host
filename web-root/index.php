@@ -73,7 +73,7 @@ class MyLib
 			$hostname = trim($xForwardedHost);
 		}
 
-		return ($hostname ?: $_SERVER['HTTP_HOST']) ?? 'akeeba.invalid';
+		return ($hostname ?: $_SERVER['HTTP_HOST']) ?? 'nikosdion.invalid';
 	}
 
 

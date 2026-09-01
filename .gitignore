@@ -26,6 +26,7 @@
 .idea/httpRequests
 
 ### This repo
+/.env
 /certificates/*
 !/certificates/.gitkeep
 /mysql/*

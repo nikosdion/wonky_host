@@ -34,6 +34,10 @@ services:
       - app-network
     volumes:
       - ./certificates:/etc/nginx/ssl # Maps the certificates to the container
+    environment:
+      # The hostname the reverse proxy responds to. Configurable via .env;
+      # see .env.example for details.
+      DOMAIN_NAME: ${DOMAIN_NAME:-wonky.local.web}
 
 networks:
   app-network:
