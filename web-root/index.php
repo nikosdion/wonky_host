@@ -1,4 +1,9 @@
 <?php
+/**
+ * Copyright (c) 2025-2026 Nicholas K. Dionysopoulos
+ * SPDX-License-Identifier: MIT
+ */
+
 class MyLib
 {
 	public function isHttps(): bool

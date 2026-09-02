@@ -1,3 +1,6 @@
+# Copyright (c) 2025-2026 Nicholas K. Dionysopoulos
+# SPDX-License-Identifier: MIT
+
 # Support for the Forwarded header. See https://github.com/nginxinc/nginx-wiki/blob/master/source/start/topics/examples/forwarded.rst#how-to-use-it-in-nginx
 map $remote_addr $proxy_forwarded_elem {
     # IPv4 addresses can be sent as-is

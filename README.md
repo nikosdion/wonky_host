@@ -109,3 +109,7 @@ If you have NginX. You can look at both the built-in `$scheme` variable and the 
         return 301 https://$host$request_uri;
     }
 ```
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE.txt](LICENSE.txt) for the full license text.

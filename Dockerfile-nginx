@@ -1,3 +1,6 @@
+# Copyright (c) 2025-2026 Nicholas K. Dionysopoulos
+# SPDX-License-Identifier: MIT
+
 # Dockerfile for the Nginx container
 FROM nginx:latest
 LABEL maintainer="Nicholas K. Dionysopoulos"
